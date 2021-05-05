@@ -1,0 +1,103 @@
+#!/bin/bash
+function contextSwitch {
+	{
+	ctxt1=$(grep ctxt /proc/stat | awk '{print $2}')
+        echo 50
+	sleep 1
+        ctxt2=$(grep ctxt /proc/stat | awk '{print $2}')
+        ctxt=$(($ctxt2 - $ctxt1))
+        result="Number os context switches in the last secound: $ctxt"
+	echo $result > result
+	} | whiptail --gauge "Getting data ..." 300 300 20
+}
+
+# 0 - это высота | 0 это ширина | 20 это 
+while [ 1 ]
+do
+CHOICE=$(
+whiptail --title "Редактирование настроечного файла Bayobu" --menu "\
+https://www.byobu.org/\n
+Клавишами верх/низ выберите справку и нажмите enter.\n
+Для выхода выберите End script." 0 0 20\
+	"1)" "Установка"\
+        "2)" "Версия"\
+	"3)" "Выбор: tmux | screen"\
+	"4)" "Цветная командная строка"\
+	"5)" "По умолчанию в Byobu используются следующие горячие клавиши:"\
+        "6)" "Редактирование в ne"\
+        "7)" "Мои изменения"\
+        "8)" "End script"  3>&2 2>&1 1>&3	
+)
+
+result=$(whoami)
+case $CHOICE in
+"1)")   
+result="sudo add-apt-repository ppa:byobu/ppa
+        sudo apt-get update
+        sudo apt-get install byobu"
+        ;;
+	"2)")   
+result="byobu --version"
+	;;
+	"3)")
+result="По умолчанию Byobu работает с мультиплексором tmux, однако можете изменить мультиплексор. Например, выбрать screen.\n
+Для этого запустите команду:
+byobu-select-backend\n
+На экране появится список доступных мультиплексоров. Выберите один из них, введите его порядковый номер и нажмите Enter:\n
+Select the byobu backend:
+1. tmux
+2. screen\n
+Choose 1-2 [1]:"
+;;
+"4)")   
+result="Byobu поддерживает цветную командную строку, которая включает в себя код возврата последней выполненной команды.
+Она включена по умолчанию в некоторых средах.\n
+Чтобы включить её вручную (или убедиться, что она уже включена), запустите:
+byobu-enable-prompt\n
+Перезапустите оболочку ~/.bashrc\n
+Чтобы отключить цветную командную строку, запустите:
+byobu-disable-prompt."
+;;
+"5)")   
+result="\
+F2 - Создать новое окно
+F3 - Перейти к предыдущему окну
+F4 - Перейти к следующему окну
+F5 - Перечитать профиль
+F6 - Отсоединиться от текущей сессии
+F7 - Включить режим копирования
+F8 - Переименовать окно
+F9 - Конфигурационное меню
+F12 - Заблокировать терминал
+Shift+F2 - Разделить экран горизонтально на 2 окна
+Ctrl+F2 - Разделить экран вертикально на 2 окна
+Shift+F3 - Переместить фокус на предыдущую зону (при разделении экрана)
+Shift+F4 - Переместить фокус на следующую зону (при разделении экрана)
+Shift+F5 - Объединить все разделения экрана
+Ctrl+F6 - Удалить область экрана (при разделении экрана)
+Ctrl+F5 - Пересоздать соединение к GPG and SSH сокетам
+Shift+F6 - Отсоединиться, но не выполнить logout
+Alt+Page↑ - Перейти в режим скроллинга
+Alt+Page↓ - Перейти в режим скроллинга
+Ctrl+a+$ - Показать детальную информацию
+Ctrl+a+R - Перезагрузить профиль
+Ctrl+a+! - Toggle key bindings on and off
+Ctrl+a+k - Закрыть текущее «окно»
+Ctrl+a+~ - Save the current window's scrollback buffer"
+;;
+"6)")   
+result="sudo ne /usr/share/byobu/keybindings/f-keys.tmux"
+;;
+"7)")
+result="\n
+#bind-key -n S-F1 new-window -n help \"sh -c '$BYOBU_PAGER $BYOBU_PREFIX/share/doc/byobu/help.tmux.txt'\"
+bind-key -n F2 new-window -c \"#{pane_current_path}\" \; rename-window \"-\"
+bind-key -n S-F1 display-panes \\; split-window -h -c \"#{pane_current_path}\"
+bind-key -n S-F2 display-panes \\; split-window -v -c \"#{pane_current_path}\""
+;;
+"8)") exit
+;;
+esac
+whiptail --msgbox "$result" 0 0
+done
+exit
